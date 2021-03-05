@@ -1,0 +1,21 @@
+
+# train test data
+train: /content/vinbigdata-processed/images/train/
+test: /content/vinbigdata-processed/images/test/
+val: /content/vinbigdata-processed/images/val/
+nc: 14
+#0 - Aortic enlargement
+#1 - Atelectasis
+#2 - Calcification
+#3 - Cardiomegaly
+#4 - Consolidation
+#5 - ILD
+#6 - Infiltration
+#7 - Lung Opacity
+#8 - Nodule/Mass
+#9 - Other lesion
+#10 - Pleural effusion
+#11 - Pleural thickening
+#12 - Pneumothorax
+#13 - Pulmonary fibrosis
+names: ['Aortic enlargement','Atelectasis','Calcification','Cardiomegaly','Consolidation','ILD','Infiltration','Lung Opacity','Nodule/Mass','Other lesion','Pleural effusion','Pleural thickening','Pneumothorax','Pulmonary fibrosis']
