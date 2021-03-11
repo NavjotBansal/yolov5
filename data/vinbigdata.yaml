@@ -1,8 +1,8 @@
 
 # train test data
-train: /content/vinbigdata-processed/images/train/
-test: /content/vinbigdata-processed/images/test/
-val: /content/vinbigdata-processed/images/val/
+train: ../input/vinbig-xray-compressed-images-for-yolo-training/vinbigdata-processed/images/train/
+test: ../input/vinbig-xray-compressed-images-for-yolo-training/vinbigdata-processed/images/test/
+val: ../input/vinbig-xray-compressed-images-for-yolo-training/vinbigdata-processed/images/val/
 nc: 14
 #0 - Aortic enlargement
 #1 - Atelectasis
