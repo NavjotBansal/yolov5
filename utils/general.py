@@ -504,7 +504,7 @@ def print_mutation(hyp, results, yaml_file='hyp_evolved.yaml', bucket=''):
     V_A_L_S = tuple(hyp.values())
     E_P = open('evolve_parameters.txt','a')
     for i in range(len(K_E_Y_S)):
-        E_P.write(K_E_Y_S[i]+" "+V_A_L_S[i]+'\n')
+        E_P.write(str(K_E_Y_S[i])+" "+str(V_A_L_S[i])+'\n')
     E_P.write('\n')
     E_P.close()       
 
