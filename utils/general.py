@@ -521,7 +521,7 @@ def print_mutation(hyp, results, yaml_file='hyp_evolved.yaml', bucket=''):
         c = '%10.4g' * len(results) % results  # results (P, R, mAP@0.5, mAP@0.5:0.95, val_losses x 3)
         f.write('# Hyperparameter Evolution Results\n# Generations: %g\n# Metrics: ' % len(x) + c + '\n\n')
         dumped = yaml.dump(hyp, f, sort_keys=False)
-        file = open('../data/evolve.yaml','w')
+        file = open('evolve.yaml','w')
         file.write(dumped)
         file.close()
         
