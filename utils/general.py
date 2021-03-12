@@ -499,6 +499,15 @@ def print_mutation(hyp, results, yaml_file='hyp_evolved.yaml', bucket=''):
     # Print mutation results to evolve.txt (for use with train.py --evolve)
     a = '%10s' * len(hyp) % tuple(hyp.keys())  # hyperparam keys
     b = '%10.3g' * len(hyp) % tuple(hyp.values())  # hyperparam values
+    print('\n\n Writing to evolve_parameters.txt')
+    K_E_Y_S = tuple(hyp.keys())
+    V_A_L_S = tuple(hyp.values())
+    E_P = open('evolve_parameters.txt','a')
+    for i in range(len(K_E_Y_S)):
+        E_P.write(K_E_Y_S[i]+" "+V_A_L_S[i]+'\n')
+    E_P.write('\n')
+    E_P.close()       
+
     c = '%10.4g' * len(results) % results  # results (P, R, mAP@0.5, mAP@0.5:0.95, val_losses x 3)
     print('\n%s\n%s\nEvolved fitness: %s\n' % (a, b, c))
 
@@ -520,11 +529,7 @@ def print_mutation(hyp, results, yaml_file='hyp_evolved.yaml', bucket=''):
         results = tuple(x[0, :7])
         c = '%10.4g' * len(results) % results  # results (P, R, mAP@0.5, mAP@0.5:0.95, val_losses x 3)
         f.write('# Hyperparameter Evolution Results\n# Generations: %g\n# Metrics: ' % len(x) + c + '\n\n')
-        dumped = yaml.dump(hyp, f, sort_keys=False)
-        file = open('evolve.yaml','w')
-        file.write(dumped)
-        file.close()
-        
+        dumped = yaml.dump(hyp, f, sort_keys=False)        
     if bucket:
         os.system('gsutil cp evolve.txt %s gs://%s' % (yaml_file, bucket))  # upload
 
