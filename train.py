@@ -75,16 +75,14 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
         with torch_distributed_zero_first(rank):
             attempt_download(weights)  # download if not found locally
         ckpt = torch.load(weights, map_location=device)  # load checkpoint
-        if hyp.get('anchors'):
-            ckpt['model'].yaml['anchors'] = round(hyp['anchors'])  # force autoanchor
-        model = Model(opt.cfg or ckpt['model'].yaml, ch=3, nc=nc).to(device)  # create
-        exclude = ['anchor'] if opt.cfg or hyp.get('anchors') else []  # exclude keys
+        model = Model(opt.cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+        exclude = ['anchor'] if (opt.cfg or hyp.get('anchors')) and not opt.resume else []  # exclude keys
         state_dict = ckpt['model'].float().state_dict()  # to FP32
         state_dict = intersect_dicts(state_dict, model.state_dict(), exclude=exclude)  # intersect
         model.load_state_dict(state_dict, strict=False)  # load
         logger.info('Transferred %g/%g items from %s' % (len(state_dict), len(model.state_dict()), weights))  # report
     else:
-        model = Model(opt.cfg, ch=3, nc=nc).to(device)  # create
+        model = Model(opt.cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
 
     # Freeze
     freeze = []  # parameter names to freeze (full or partial)
@@ -151,8 +149,8 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
 
         # EMA
         if ema and ckpt.get('ema'):
-            ema.ema.load_state_dict(ckpt['ema'][0].float().state_dict())
-            ema.updates = ckpt['ema'][1]
+            ema.ema.load_state_dict(ckpt['ema'].float().state_dict())
+            ema.updates = ckpt['updates']
 
         # Results
         if ckpt.get('training_results') is not None:
@@ -216,6 +214,7 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
             # Anchors
             if not opt.noautoanchor:
                 check_anchors(dataset, model=model, thr=hyp['anchor_t'], imgsz=imgsz)
+            model.half().float()  # pre-reduce anchor precision 
 
     # Model parameters
     hyp['box'] *= 3. / nl  # scale to layers
@@ -384,7 +383,8 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
                         'best_fitness': best_fitness,
                         'training_results': results_file.read_text(),
                         'model': deepcopy(model.module if is_parallel(model) else model).half(),
-                        'ema': (deepcopy(ema.ema).half(), ema.updates),
+                        'ema': deepcopy(ema.ema).half(),
+                        'updates': ema.updates,
                         'optimizer': optimizer.state_dict(),
                         'wandb_id': wandb_run.id if wandb else None}
 
@@ -528,6 +528,7 @@ if __name__ == '__main__':
         if opt.global_rank in [-1, 0]:
             logger.info(f'Start Tensorboard with "tensorboard --logdir {opt.project}", view at http://localhost:6006/')
             tb_writer = SummaryWriter(opt.save_dir)  # Tensorboard
+        wandb = None
         train(hyp, opt, device, tb_writer, wandb)
 
     # Evolve hyperparameters (optional)
@@ -569,7 +570,7 @@ if __name__ == '__main__':
         if opt.bucket:
             os.system('gsutil cp gs://%s/evolve.txt .' % opt.bucket)  # download evolve.txt if exists
 
-        for _ in range(1):  # generations to evolve
+        for _ in range(300):  # generations to evolve
             if Path('evolve.txt').exists():  # if evolve.txt exists: select best hyps and mutate
                 # Select parent(s)
                 parent = 'single'  # parent selection method: 'single' or 'weighted'
@@ -602,7 +603,7 @@ if __name__ == '__main__':
                 hyp[k] = round(hyp[k], 5)  # significant digits
 
             # Train mutation
-            results = train(hyp.copy(), opt, device, wandb=None)
+            results = train(hyp.copy(), opt, device, wandb=wandb)
 
             # Write mutation results
             print_mutation(hyp.copy(), results, yaml_file, opt.bucket)
